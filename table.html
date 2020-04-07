@@ -1,0 +1,264 @@
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="style.css"/>
+    </head>
+    
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+<script>
+    
+
+
+//making the table  
+    
+    
+//get mean quiz grades
+var getQuiz = function(quiz) {
+                return quiz.grade;
+            }
+     var PengQuiz = function(penguin)
+           {
+               var quizArray= penguin.quizes;
+               var grades = quizArray.map(getQuiz);
+               return d3.mean(grades).toFixed(2);
+           }    
+     
+//get mean homework grades
+     var getHW = function(homework) {
+                return homework.grade;
+            }
+     var PengHW = function(penguin)
+           {
+               var hwArray= penguin.homework;
+               var grades = hwArray.map(getHW);
+               return d3.mean(grades).toFixed(2);
+           }
+     
+//get mean test grades
+     var getTest = function(test) 
+            {
+                return test.grade;
+            }
+     var PengTest = function(penguin)
+           {
+               var testArray= penguin.test;
+               var grades = testArray.map(getTest);
+               return d3.mean(grades).toFixed(1);
+           }
+     
+//get final grades
+     var PengFinal = function(penguin)
+     {
+         return penguin.final[0].grade
+     }
+     
+//Early Warning (extra)
+     var overallGrade = function(penguin)
+     {
+         var wFinal = PengFinal(penguin)*0.35
+         var wTest = PengTest(penguin)*0.3
+         var wQuiz = PengQuiz(penguin)*0.2
+         var wHW = PengHW(penguin)*0.15
+         var total = wFinal + wTest + wQuiz + wHW
+         return total.toFixed(2)
+     }
+     
+
+
+//make table     
+var drawTable = function(penguin)    
+ {   
+console.log("drawn")
+//create rows 
+var rows = d3.select("#pengtable tbody")
+    .selectAll("tr")
+    .data(penguin)
+    .enter()
+    .append("tr")
+    .attr("class", function(penguin)
+         {
+            if (overallGrade(penguin) < 50) {return "danger"}
+            });
+     //I used 50 instead of 70 since none of the penguins in the class had an overall grade of above 70
+ 
+ //images
+ rows.append("td")
+     .attr("title","image")
+    .append("img")
+    .attr("src", function(penguin){return penguin.picture})
+    
+//add mean quiz grade
+rows.append("td")
+     .text(PengQuiz)
+    
+//add mean homework grade
+rows.append("td")
+     .text(PengHW)
+     
+//add mean test grade 
+rows.append("td")
+     .text(PengTest)
+     
+//add final exam grade
+rows.append("td")
+     .text(PengFinal)
+
+//add overall grade
+rows.append("td")
+    .text(overallGrade)
+ 
+ }
+
+
+
+//Sorting
+
+var clearTable = function()
+{
+    d3.selectAll("#pengtable tbody tr")
+        .remove()
+    console.log("cleared")
+}
+
+//initialize headers
+var initHeaders = function(penguin)
+{
+    //quizzes
+    d3.select("#quiz")
+    .on("click", function()
+        {console.log("Clicked.");
+        penguin.sort(function(a,b)
+            {
+                var aMean = PengQuiz(a)
+                var bMean = PengQuiz(b)
+                if(aMean > bMean) {return 1}
+                else if (aMean < bMean) {return -1}
+                else {return 0}
+            });
+        clearTable();
+        drawTable(penguin);
+    });
+    
+    //homework
+    d3.select("#hw")
+    .on("click",function()
+       {
+        console.log("Clicked?")
+        penguin.sort(function(a,b)
+        {
+            var aMean = PengHW(a)
+            var bMean = PengHW(b)
+            if(aMean > bMean) {return 1}
+            else if (aMean < bMean) {return -1}
+            else {return 0}
+        });
+        clearTable();
+        drawTable(penguin);
+    });
+    
+    //tests
+    d3.select("#test")
+    .on("click",function()
+       {
+        console.log("Clicked!")
+        penguin.sort(function(a,b)
+        {
+            var aMean = PengTest(a)
+            var bMean = PengTest(b)
+            if(aMean > bMean) {return 1}
+            else if (aMean < bMean) {return -1}
+            else {return 0}
+        });
+        clearTable();
+        drawTable(penguin);
+    });
+    
+    //overall
+    d3.select("#overall")
+    .on("click",function()
+       {
+        console.log("iClicked")
+        penguin.sort(function(a,b)
+        {
+            var aGrade = overallGrade(a)
+            var bGrade = overallGrade(b)
+            if(aGrade > bGrade) {return 1}
+            else if (aGrade < bGrade) {return -1}
+            else {return 0}
+        });
+        clearTable();
+        drawTable(penguin);
+    
+     });
+    
+    //final
+    d3.select("#final")
+    .on("click",function()
+       {
+        console.log("Clicked...");
+        penguin.sort(function(a,b)
+        {
+            var aFinal = PengFinal(a)
+            var bFinal = PengFinal(b)
+            if(aFinal > bFinal) {return 1}
+            else if (aFinal < bFinal) {return -1}
+            else {return 0}
+        });
+        clearTable();
+        drawTable(penguin);
+         });
+       
+    
+    
+    
+       };
+
+
+
+
+//Promise
+ var PenguinPromise = d3.json("classData.json");
+
+//success
+var PengSuccess = function(penguin)
+{
+    console.log("Success", penguin);
+    drawTable(penguin)
+    initHeaders(penguin)
+}
+
+//failure
+var PengFail = function(error)
+{
+    console.log("Something went wrong", error)
+}
+
+PenguinPromise.then(PengSuccess,PengFail)
+    
+    
+    
+    
+    
+    
+    
+</script>
+<body>
+    
+    <table id="pengtable">
+    <thead>
+        <th>Image</th>
+        <th id="quiz">Mean Quiz Grade</th>
+        <th id="hw">Mean Homework Grade</th>
+        <th id="test">Mean Test Grade</th>
+        <th id="final">Final Exam Grade</th>
+        <th id="overall">Overall Grade</th>
+        </thead>
+    <tbody>
+        
+        </tbody>
+    </table>
+    
+    
+    
+    </body>
+
+</html>
